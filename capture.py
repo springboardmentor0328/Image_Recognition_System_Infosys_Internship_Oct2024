@@ -1,11 +1,12 @@
 import cv2
 import os
+import time
 
 # Path to save captured images
 dataset_path = 'dataset'
 
-# Instruction states
-instructions = ["Move Up", "Move Down", "Move Right", "Move Left"]
+# Instruction states for rotating head
+instructions = ["Look Forward", "Look Left", "Look Right", "Look Up"]
 completed_instructions = {direction: 0 for direction in instructions}  # Track how many images captured
 
 # Define frame size
@@ -33,7 +34,7 @@ def capture_images(person_name):
     frame_x = (frame_width - frame_w) // 2  # Horizontal center
     frame_y = (frame_height - frame_h) // 2  # Vertical center
 
-    # Wait until the face is inside the static frame
+    # Instruction to prompt the user to place their face inside the frame
     while True:
         ret, frame = cap.read()
         if not ret:
@@ -57,40 +58,36 @@ def capture_images(person_name):
             if (x + w > frame_x and x < frame_x + frame_w and y + h > frame_y and y < frame_y + frame_h):
                 face_inside_frame = True
 
-        # Provide feedback to the user
+        # Show instruction to the user
         if face_inside_frame:
-            cv2.putText(frame, "Face detected inside the frame. Capture will start now.", (10, 30),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-            cv2.putText(frame, "Follow the instructions to move your face.", (10, 60),
+            cv2.putText(frame, "Face detected inside the frame. Capturing will start.", (10, 30),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
             cv2.imshow("Face Capture", frame)
-            break  # Face is inside the frame, break to start guiding and capturing
-
+            break  # Exit the loop when face is inside the frame
         else:
             cv2.putText(frame, "Please place your face inside the frame!", (10, 30),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
 
-        # Show the frame with the face detection and feedback
+        # Show the frame with feedback
         cv2.imshow("Face Capture", frame)
 
         # Check for 'q' key press to quit manually
         if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-
-    # Now proceed with the instructions for moving the head
+            cap.release()
+            cv2.destroyAllWindows()
+            return
 
     img_count = 0  # Total image counter across all directions
     instruction_idx = 0  # Track current instruction
 
+    # Start capturing images for each instruction with automatic transitions
     while instruction_idx < len(instructions):
-        # Initialize the counter for the current direction (25 images per direction)
-        images_for_current_instruction = 0
-        
-        # Show instruction text
+        # Set timer for 5 seconds per instruction
+        instruction_start_time = time.time()
         current_instruction = instructions[instruction_idx]
         print(f"Now performing: {current_instruction}")
 
-        while images_for_current_instruction < 25:
+        while time.time() - instruction_start_time < 5:  # 5 seconds per instruction
             ret, frame = cap.read()
             if not ret:
                 print("Error: Failed to capture image.")
@@ -113,62 +110,36 @@ def capture_images(person_name):
                 if (x + w > frame_x and x < frame_x + frame_w and y + h > frame_y and y < frame_y + frame_h):
                     face_inside_frame = True
 
-            # If face is inside the frame, proceed to capture images
+            # Show the current instruction on the screen
+            cv2.putText(frame, f"Instruction: {current_instruction}", (10, 30),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
+
+            # Capture images continuously while the face is inside the frame
             if face_inside_frame:
-                # Now check if the user is performing the correct movement for this instruction
-                cv2.putText(frame, f"Instruction: {current_instruction}", (10, 30),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
-
-                # Check if the user has moved in the required direction
-                if current_instruction == "Move Up" and y < 100:
-                    images_for_current_instruction += 1
-                    cv2.putText(frame, f"Captured {images_for_current_instruction} images", (10, 60),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-                elif current_instruction == "Move Down" and y > 200:
-                    images_for_current_instruction += 1
-                    cv2.putText(frame, f"Captured {images_for_current_instruction} images", (10, 60),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-                elif current_instruction == "Move Right" and x < 100:
-                    images_for_current_instruction += 1
-                    cv2.putText(frame, f"Captured {images_for_current_instruction} images", (10, 60),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-                elif current_instruction == "Move Left" and x > 200:
-                    images_for_current_instruction += 1
-                    cv2.putText(frame, f"Captured {images_for_current_instruction} images", (10, 60),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-
-                # Save image every time the direction condition is met
                 img_path = os.path.join(save_dir, f'{person_name}_{img_count}.jpg')
                 cv2.imwrite(img_path, frame)
-                print(f"Saved {img_path}")
                 img_count += 1
-
-            else:
-                cv2.putText(frame, "Please keep your face inside the frame!", (10, 30),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+                print(f"Saved {img_path}")
 
             # Show the frame with feedback
             cv2.imshow("Face Capture", frame)
 
             # Check for 'q' key press to quit manually
             if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
+                cap.release()
+                cv2.destroyAllWindows()
+                return
 
-        # Move to the next instruction after capturing enough images
-        print(f"Captured {images_for_current_instruction} images for {current_instruction}")
-        completed_instructions[current_instruction] = images_for_current_instruction
+        # Move to the next instruction after 5 seconds
+        completed_instructions[current_instruction] += 1
         instruction_idx += 1  # Proceed to next instruction
 
     # Final message when capturing is complete
-    cv2.putText(frame, "All Instructions Complete!", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-    cv2.imshow("Face Capture", frame)
-
-    # Wait for 1 second and close the window
-    cv2.waitKey(1000)  # Wait 1 second to display the "Complete" message
+    print("All Instructions Complete!")
     cap.release()  # Release the video capture
     cv2.destroyAllWindows()  # Close all windows
 
 # Capture images by providing the person's name
 if __name__ == "__main__":
     person_name = input("Enter the person's name: ")
-    capture_images(person_name)  # Corrected this line to properly call the function
+    capture_images(person_name)
