@@ -27,9 +27,16 @@ def run_recognition():
 # Route to start face recognition
 @app.route('/start_recognition', methods=['GET'])
 def start_recognition():
-    # Start recognition in a separate thread to avoid blocking the Flask app
-    inference.recognize_faces()
-    return jsonify(status="Started recognition")
+    try:
+        # Call your recognition function or process here
+        recognition_status = inference.recognize_faces()  # Placeholder for your recognition logic
+
+        return jsonify({"status": recognition_status})
+
+    except Exception as e:
+        print(f"Recognition error: {e}")
+        return jsonify({"status": "Recognition failed.", "error": str(e)}), 500
+
 
 if __name__ == "__main__":
     app.run(debug=True)
