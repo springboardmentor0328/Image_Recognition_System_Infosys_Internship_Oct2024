@@ -46,13 +46,15 @@ def capture_images(person_name):
         faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(100, 100))
 
         # Draw the static instruction frame (yellow rectangle) for the user to place their face inside
-        cv2.rectangle(frame, (frame_x, frame_y), (frame_x + frame_w, frame_y + frame_h), (0, 255, 255), 2)
+        frame_with_instructions = frame.copy()  # Copy the original frame for display
+
+        cv2.rectangle(frame_with_instructions, (frame_x, frame_y), (frame_x + frame_w, frame_y + frame_h), (0, 255, 255), 2)
 
         face_inside_frame = False  # Flag to check if face is inside frame
 
         for (x, y, w, h) in faces:
-            # Draw rectangle around the detected face
-            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            # Draw rectangle around the detected face (only for display, not for saving)
+            cv2.rectangle(frame_with_instructions, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
             # Check if the face is inside the static frame (within the bounds)
             if (x + w > frame_x and x < frame_x + frame_w and y + h > frame_y and y < frame_y + frame_h):
@@ -60,16 +62,16 @@ def capture_images(person_name):
 
         # Show instruction to the user
         if face_inside_frame:
-            cv2.putText(frame, "Face detected inside the frame. Capturing will start.", (10, 30),
+            cv2.putText(frame_with_instructions, "Face detected inside the frame. Capturing will start.", (10, 30),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-            cv2.imshow("Face Capture", frame)
+            cv2.imshow("Face Capture", frame_with_instructions)
             break  # Exit the loop when face is inside the frame
         else:
-            cv2.putText(frame, "Please place your face inside the frame!", (10, 30),
+            cv2.putText(frame_with_instructions, "Please place your face inside the frame!", (10, 30),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
 
         # Show the frame with feedback
-        cv2.imshow("Face Capture", frame)
+        cv2.imshow("Face Capture", frame_with_instructions)
 
         # Check for 'q' key press to quit manually
         if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -82,12 +84,12 @@ def capture_images(person_name):
 
     # Start capturing images for each instruction with automatic transitions
     while instruction_idx < len(instructions):
-        # Set timer for 5 seconds per instruction
+        # Set timer for 10 seconds per instruction
         instruction_start_time = time.time()
         current_instruction = instructions[instruction_idx]
         print(f"Now performing: {current_instruction}")
 
-        while time.time() - instruction_start_time < 5:  # 5 seconds per instruction
+        while time.time() - instruction_start_time < 10:  # 10 seconds per instruction
             ret, frame = cap.read()
             if not ret:
                 print("Error: Failed to capture image.")
@@ -98,31 +100,34 @@ def capture_images(person_name):
             faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(100, 100))
 
             # Draw the static instruction frame (yellow rectangle) for the user to place their face inside
-            cv2.rectangle(frame, (frame_x, frame_y), (frame_x + frame_w, frame_y + frame_h), (0, 255, 255), 2)
+            frame_with_instructions = frame.copy()  # Copy the original frame for display
+
+            cv2.rectangle(frame_with_instructions, (frame_x, frame_y), (frame_x + frame_w, frame_y + frame_h), (0, 255, 255), 2)
 
             face_inside_frame = False  # Flag to check if face is inside frame
 
             for (x, y, w, h) in faces:
-                # Draw rectangle around the detected face
-                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                # Draw rectangle around the detected face (only for display, not for saving)
+                cv2.rectangle(frame_with_instructions, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
                 # Check if the face is inside the static frame (within the bounds)
                 if (x + w > frame_x and x < frame_x + frame_w and y + h > frame_y and y < frame_y + frame_h):
                     face_inside_frame = True
 
             # Show the current instruction on the screen
-            cv2.putText(frame, f"Instruction: {current_instruction}", (10, 30),
+            cv2.putText(frame_with_instructions, f"Instruction: {current_instruction}", (10, 30),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
 
             # Capture images continuously while the face is inside the frame
             if face_inside_frame:
+                # Save the image without bounding boxes or instructions
                 img_path = os.path.join(save_dir, f'{person_name}_{img_count}.jpg')
-                cv2.imwrite(img_path, frame)
+                cv2.imwrite(img_path, frame)  # Save the original frame without annotations
                 img_count += 1
                 print(f"Saved {img_path}")
 
-            # Show the frame with feedback
-            cv2.imshow("Face Capture", frame)
+            # Show the frame with feedback (with bounding boxes)
+            cv2.imshow("Face Capture", frame_with_instructions)
 
             # Check for 'q' key press to quit manually
             if cv2.waitKey(1) & 0xFF == ord('q'):
