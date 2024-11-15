@@ -3,15 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Face Recognition Landing</title>
+    <title>Face Recognition</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
     <div class="main">
+        <div>
         <h1>Welcome to Facifier</h1>
         <button class="btn" id="start_recognition">Start Recognition</button>
-        <a href="/capture" class="btn">Go to Capture Page</a>
         <div id="status"></div>
+        </div>
+        <div>
+        <a href="/capture" class="btn">Go to User Registration Page</a>
+        <a href="/delete" class="btn">Go to User Deletion Page</a>
+        </div>
+
     </div>
     <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
 </body>

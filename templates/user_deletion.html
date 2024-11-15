@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Deletion</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="main">
+        <h1>Enter Name for Capture</h1>
+        <input type="text" id="nameInput" class="input-field" placeholder="Enter name to delete" />
+        <button class="btn" id="startDeletionButton">Delete User</button>
+
+        <div id="status"></div>
+        <a href="/index" class="btn">Home</a>
+    </div>
+    <script src="{{ url_for('static', filename='js/user_deletion.js') }}"></script>
+</body>
+</html>

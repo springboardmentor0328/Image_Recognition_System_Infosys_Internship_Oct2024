@@ -1,9 +1,8 @@
 import cv2
 import os
 import time
+import sqlite3
 
-# Path to save captured images
-dataset_path = 'dataset'
 
 # Instruction states for rotating head
 instructions = ["Look Forward", "Look Left", "Look Right", "Look Up"]
@@ -12,11 +11,28 @@ completed_instructions = {direction: 0 for direction in instructions}  # Track h
 # Define frame size
 frame_w, frame_h = 400, 300  # Size of the frame (width, height)
 
+# Database file path
+db_path = 'face_recognition.db'
+
+def save_image_to_db(person_name, image):
+    """Save captured image as a blob to SQLite database."""
+    conn = sqlite3.connect(db_path)
+    c = conn.cursor()
+
+    # Convert the image to binary format for storage as BLOB
+    _, img_bytes = cv2.imencode('.jpg', image)
+    img_blob = img_bytes.tobytes()
+
+    # Convert name to uppercase before saving
+    person_name_upper = person_name.upper()  # Convert to uppercase
+
+    # Insert the image and person name into the faces table
+    c.execute("INSERT INTO faces (name, image) VALUES (?, ?)", (person_name_upper, img_blob))
+    conn.commit()
+    conn.close()
+
+
 def capture_images(person_name):
-    # Create a directory to save images
-    save_dir = os.path.join(dataset_path, person_name)
-    if not os.path.exists(save_dir):
-        os.makedirs(save_dir)
 
     # Set up video capture and load the face detection cascade
     cap = cv2.VideoCapture(0)
@@ -120,17 +136,16 @@ def capture_images(person_name):
 
             # Capture images continuously while the face is inside the frame
             if face_inside_frame:
-                # Save the image without bounding boxes or instructions
-                img_path = os.path.join(save_dir, f'{person_name}_{img_count}.jpg')
-                cv2.imwrite(img_path, frame)  # Save the original frame without annotations
+                # Save the image to the database
+                save_image_to_db(person_name, frame)  # Save the original frame without annotations
                 img_count += 1
-                print(f"Saved {img_path}")
+                print(f"Saved image to database: {img_count}")
 
             # Show the frame with feedback (with bounding boxes)
             cv2.imshow("Face Capture", frame_with_instructions)
 
             # Check for 'q' key press to quit manually
-            if cv2.waitKey(1) & 0xFF == ord('q'):
+            if cv2.waitKey(1) & 0xFF == 27:
                 cap.release()
                 cv2.destroyAllWindows()
                 return
@@ -147,4 +162,5 @@ def capture_images(person_name):
 # Capture images by providing the person's name
 if __name__ == "__main__":
     person_name = input("Enter the person's name: ")
+    person_name = person_name.upper()
     capture_images(person_name)

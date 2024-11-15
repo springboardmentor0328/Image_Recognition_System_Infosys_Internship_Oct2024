@@ -1,55 +1,69 @@
 import cv2
 import os
 import numpy as np
+import sqlite3
 
-# Path to the dataset directory
-data_path = 'dataset'
+# Path to the SQLite database
+db_path = 'face_recognition.db'
 recognizer = cv2.face.LBPHFaceRecognizer_create()
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
 label_dict = {}
 
-# Load images and labels for training
-def load_images_and_labels(data_path):
+# Connect to the SQLite database
+def connect_db():
+    return sqlite3.connect(db_path)
+
+# Load images and labels from the database
+def load_images_and_labels_from_db():
     images = []
     labels = []
     current_label = 0
 
-    if not os.path.exists(data_path):
-        print(f"Directory '{data_path}' does not exist. Please check the path or create the folder.")
-        return images, labels, label_dict
+    # Connect to the database
+    conn = connect_db()
+    c = conn.cursor()
 
-    for person_name in os.listdir(data_path):
-        person_folder = os.path.join(data_path, person_name)
-        if os.path.isdir(person_folder):
-            label_dict[current_label] = person_name
-            for img_name in os.listdir(person_folder):
-                img_path = os.path.join(person_folder, img_name)
-                img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)  # Ensure grayscale images
-                if img is not None:
-                    faces = face_cascade.detectMultiScale(img, 1.1, 5)
-                    for (x, y, w, h) in faces:
-                        face = cv2.resize(img[y:y+h, x:x+w], (200, 200))
-                        images.append(face)
-                        labels.append(current_label)
-                else:
-                    print(f"Warning: Unable to read image at {img_path}")
-            current_label += 1
+    # Fetch all the faces and their labels from the database
+    c.execute("SELECT id, name, image FROM faces")
+    rows = c.fetchall()
 
-    return images, np.array(labels, dtype=np.int32), label_dict
+    for row in rows:
+        label = current_label
+        person_name = row[1]
+        img_data = row[2]
 
-# Function to train the recognizer
+        # Store the label in the dictionary
+        label_dict[label] = person_name
+
+        # Convert the binary image data to a numpy array
+        nparr = np.frombuffer(img_data, np.uint8)
+        img = cv2.imdecode(nparr, cv2.IMREAD_GRAYSCALE)
+
+        # Detect faces in the image
+        faces = face_cascade.detectMultiScale(img, 1.1, 5)
+        for (x, y, w, h) in faces:
+            face = cv2.resize(img[y:y+h, x:x+w], (200, 200))
+            images.append(face)
+            labels.append(label)
+
+        current_label += 1
+
+    conn.close()
+    return images, np.array(labels, dtype=np.int32)
+
+# Function to train the recognizer with the loaded images and labels
 def train_model():
-    images, labels, label_dict = load_images_and_labels(data_path)
+    images, labels = load_images_and_labels_from_db()
     if len(images) > 0 and labels.size > 0:
-        recognizer.train(images, labels)
+        recognizer.train(images, labels)  # Train the model
         print("Model training complete.")
     else:
-        print("No data to train on. Check the dataset directory and images.")
+        print("No data to train on. Check the database for stored images.")
 
-# Real-time face recognition
+# Real-time face recognition using webcam
 def recognize_faces():
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
     frame_skip = 2  # Process every 2nd frame to reduce lag
     frame_count = 0
     unknown_threshold = 50  # Set threshold for recognizing unknown faces
@@ -62,27 +76,25 @@ def recognize_faces():
 
         frame_count += 1
         if frame_count % frame_skip != 0:
-            continue  # Skip this frame
+            continue  # Skip this frame to reduce lag
 
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  # Convert to grayscale
 
-        # Check if the image is a valid 8-bit grayscale image
-        print(f"Image Depth: {gray.dtype}")  # Should print 'uint8'
-
-        # Face detection
-        faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+        # Detect faces in the frame
+        faces = face_cascade.detectMultiScale(gray, scaleFactor=1.04, minNeighbors=7, minSize=(30, 30))
 
         for (x, y, w, h) in faces:
+            # Resize the detected face for recognition
             face = cv2.resize(gray[y:y+h, x:x+w], (200, 200))
             label, confidence = recognizer.predict(face)
 
-            # Check confidence level to determine if face is recognized or "Unknown"
+            # Check confidence to determine if face is recognized or "Unknown"
             if confidence < unknown_threshold:
                 label_text = label_dict.get(label, "Unknown")
                 text = f"{label_text} ({100 - confidence:.2f}%)"
                 color = (0, 255, 0)  # Green for recognized face
             else:
-                text = "Unknown"
+                text = f"unknown ({100 - confidence:.2f}%)"
                 color = (0, 0, 255)  # Red for unknown face
 
             # Draw bounding box and text
@@ -100,7 +112,7 @@ def recognize_faces():
 
 if __name__ == "__main__":
     # Train the model if data exists
-    images, labels, label_dict = load_images_and_labels(data_path)
+    images, labels = load_images_and_labels_from_db()
     if len(images) > 0 and labels.size > 0:
         train_model()  # Train the model
         recognize_faces()  # Start real-time face recognition

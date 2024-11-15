@@ -3,6 +3,7 @@ import threading
 import time  # Import the time module
 import capture  # Import capture functions from capture.py
 import inference  # Import the recognition functions from inference.py
+import delete_data as du
 
 app = Flask(__name__)
 
@@ -15,6 +16,10 @@ def index():
 @app.route('/capture')
 def capture_page():
     return render_template('capture.html')
+
+@app.route('/delete')
+def deletion_page():
+    return render_template('user_deletion.html')
 
 # Route to start the face capture
 @app.route('/start_capture', methods=['POST'])
@@ -30,6 +35,22 @@ def start_capture():
             return jsonify(status="Capture failed", error=str(e)), 500
     else:
         return jsonify(status="Error: No name provided"), 400
+
+@app.route('/delete_user', methods=['POST'])
+def delete_user():
+    data=request.get_json()
+    name = data.get('name')
+    name = name.upper()
+    if name:
+        try:
+            du.row_deletion(name) # Call the capture function with the name
+            return jsonify(status=f"{name} row deleted successfully")
+        except Exception as e:
+            print(f"deletion error: {e}")
+            return jsonify(status="Deletion failed", error=str(e)), 500
+    else:
+        return jsonify(status="Error: No name provided"), 400
+
 
 # Asynchronous recognition function wrapper
 def async_recognition():
