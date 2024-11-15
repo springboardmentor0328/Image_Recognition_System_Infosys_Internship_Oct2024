@@ -6,7 +6,7 @@
 * Navigate to the project directory:
   cd Image_Recognition_System_Infosys_Internship_Oct2024
 
-* Create a virtual environment
+* Create a virtual environment:
   python -m venv venv
 
 * Activate the virtual environment:
