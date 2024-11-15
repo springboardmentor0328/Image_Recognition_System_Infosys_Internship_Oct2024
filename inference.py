@@ -25,7 +25,7 @@ def load_images_and_labels(data_path):
             label_dict[current_label] = person_name
             for img_name in os.listdir(person_folder):
                 img_path = os.path.join(person_folder, img_name)
-                img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+                img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)  # Ensure grayscale images
                 if img is not None:
                     faces = face_cascade.detectMultiScale(img, 1.1, 5)
                     for (x, y, w, h) in faces:
@@ -57,14 +57,20 @@ def recognize_faces():
     while True:
         ret, frame = cap.read()
         if not ret:
-            break
+            print("Failed to read frame from camera")
+            break  # Stop if frame reading fails
 
         frame_count += 1
         if frame_count % frame_skip != 0:
             continue  # Skip this frame
 
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        faces = face_cascade.detectMultiScale(gray, 1.1, 5)  # Adjusted parameters for speed
+
+        # Check if the image is a valid 8-bit grayscale image
+        print(f"Image Depth: {gray.dtype}")  # Should print 'uint8'
+
+        # Face detection
+        faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
 
         for (x, y, w, h) in faces:
             face = cv2.resize(gray[y:y+h, x:x+w], (200, 200))
@@ -93,7 +99,10 @@ def recognize_faces():
     cv2.destroyAllWindows()
 
 if __name__ == "__main__":
+    # Train the model if data exists
+    images, labels, label_dict = load_images_and_labels(data_path)
     if len(images) > 0 and labels.size > 0:
-        recognize_faces()
+        train_model()  # Train the model
+        recognize_faces()  # Start real-time face recognition
     else:
         print("Face recognizer is not trained due to insufficient or missing training data.")

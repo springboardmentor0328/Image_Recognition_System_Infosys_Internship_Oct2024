@@ -74,7 +74,7 @@ def capture_images(person_name):
         cv2.imshow("Face Capture", frame_with_instructions)
 
         # Check for 'q' key press to quit manually
-        if cv2.waitKey(1) & 0xFF == ord('q'):
+        if cv2.waitKey(1) & 0xFF == 27:
             cap.release()
             cv2.destroyAllWindows()
             return

@@ -9,11 +9,12 @@
 <body>
     <div class="main">
         <h1>Enter Name for Capture</h1>
-        <input type="text" id="person_name" class="input-field" placeholder="Enter Name">
-        <button class="btn" id="start_capture">Start Capturing</button>
+        <input type="text" id="nameInput" class="input-field" placeholder="Enter your name" />
+        <button class="btn" id="startCaptureButton">Start Capturing</button>
+
         <div id="status"></div>
         <a href="/index" class="btn">Home</a>
     </div>
-    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/capture.js') }}"></script>
 </body>
 </html>
