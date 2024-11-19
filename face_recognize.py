@@ -1,68 +1,186 @@
-# It helps in identifying the faces 
-import cv2
+from email import generator
 import sys
-import numpy
-import os 
+import cv2
+from flask import Response
+import numpy as np
+import os
+import time
+class FaceRecognizer:
+    def __init__(self, haar_file='haarcascade_frontalface_default.xml', dataset_dir='datasets'):
+        # Initialize face recognizer
+        self.model = cv2.face.LBPHFaceRecognizer_create()
+        self.face_cascade = cv2.CascadeClassifier(haar_file)
+        self.dataset_dir = dataset_dir
+        self.names = {}  # Maps user IDs to names
+        self.width, self.height = 130, 100  # Resize dimensions for training images
 
-size = 4
-haar_file = 'haarcascade_frontalface_default.xml'
-datasets = 'datasets'
+        # Load existing dataset for training
+        self.load_dataset()
 
-# Part 1: Create fisherRecognizer 
-print('Recognizing Face Please Be in sufficient Lights...') 
+    def load_dataset(self):
+        """Loads images from the dataset directory and trains the recognizer model."""
+        images, labels = [], []
+        id = 0
 
-# Create a list of images and a list of corresponding names 
-(images, labels, names, id) = ([], [], {}, 0) 
-for (subdirs, dirs, files) in os.walk(datasets): 
-    for subdir in dirs: 
-        names[id] = subdir 
-        subjectpath = os.path.join(datasets, subdir) 
-        for filename in os.listdir(subjectpath): 
-            path = subjectpath + '/' + filename 
-            label = id
-            images.append(cv2.imread(path, 0)) 
-            labels.append(int(label)) 
-        id += 1
-(width, height) = (130, 100) 
+        # Traverse through dataset directory and load images
+        for subdir in os.listdir(self.dataset_dir):
+            if os.path.isdir(os.path.join(self.dataset_dir, subdir)):
+                self.names[id] = subdir
+                subject_path = os.path.join(self.dataset_dir, subdir)
+                for filename in os.listdir(subject_path):
+                    img_path = os.path.join(subject_path, filename)
+                    img = cv2.imread(img_path, 0)
+                    if img is not None:
+                        img_resized = cv2.resize(img, (self.width, self.height))
+                        images.append(img_resized)
+                        labels.append(id)
+                id += 1
 
-# Create a Numpy array from the two lists above 
-(images, labels) = [numpy.array(lis) for lis in [images, labels]] 
+        # Convert images and labels lists to numpy arrays
+        images, labels = np.array(images), np.array(labels)
 
-# OpenCV trains a model from the images 
-model = cv2.face.LBPHFaceRecognizer_create() 
-model.train(images, labels) 
+        # Train the model if there are any images
+        if len(images) > 0:
+            self.model.train(images, labels)
 
-# Part 2: Use fisherRecognizer on camera stream 
-face_cascade = cv2.CascadeClassifier(haar_file) 
-webcam = cv2.VideoCapture(0) 
-
-while True: 
-    (_, im) = webcam.read() 
-    gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY) 
-    faces = face_cascade.detectMultiScale(gray, 1.3, 5) 
-    for (x, y, w, h) in faces: 
-        cv2.rectangle(im, (x, y), (x + w, y + h), (255, 0, 0), 2) 
-        face = gray[y:y + h, x:x + w] 
-        face_resize = cv2.resize(face, (width, height)) 
+    def register_new_user(self, username):
+        """Registers a new user by capturing images from the webcam."""
+        user_path = os.path.join(self.dataset_dir, username)
+        if not os.path.isdir(user_path):
+            os.makedirs(user_path)
         
-        # Try to recognize the face 
-        prediction = model.predict(face_resize) 
-        confidence = prediction[1]  # Get confidence level
+        webcam = cv2.VideoCapture(0)
+        count = 0
 
-        if confidence < 100:  # Adjust the threshold value as necessary
-            cv2.rectangle(im, (x, y), (x + w, y + h), (0, 255, 0), 3) 
-            cv2.putText(im, '%s - %.2f' % (names[prediction[0]], confidence), (x-10, y-10), 
-                        cv2.FONT_HERSHEY_PLAIN, 1, (0, 255, 0))
-        else:
-            cv2.rectangle(im, (x, y), (x + w, y + h), (0, 0, 255), 3)  # Red box for unknown
-            cv2.putText(im, 'unknown', (x-10, y-10), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 255))
+        while count < 20:  # Capture 20 images for the new user
+            ret, frame = webcam.read()
+            if not ret:
+                print("Error: Could not access the webcam.")
+                break
 
-    cv2.imshow('OpenCV', im) 
-    
-    key = cv2.waitKey(10) 
-    if key == 27: 
-        break 
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            faces = self.face_cascade.detectMultiScale(gray, 1.3, 5)
 
-# Release the webcam and destroy all windows
-webcam.release()
-cv2.destroyAllWindows()
+            for (x, y, w, h) in faces:
+                face = gray[y:y+h, x:x+w]
+                face_resized = cv2.resize(face, (self.width, self.height))
+                
+                # Save the image in JPG format
+                img_path = os.path.join(user_path, f"{count}.jpg")
+                cv2.imwrite(img_path, face_resized)
+                count += 1
+
+                # Print progress to the console
+                print(f"Captured {count}/20 images for user '{username}'.")
+
+                # Draw a rectangle around the face and display it
+                cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
+                cv2.putText(frame, f"Capturing {count}/20", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+                cv2.imshow("Registering New User", frame)
+
+                if count >= 20:
+                    break
+
+            # Exit loop if 'q' is pressed
+            if cv2.waitKey(10) & 0xFF == ord('q'):
+                print("Registration canceled by user.")
+                break
+
+        # Release the webcam and close OpenCV windows
+        webcam.release()
+        cv2.destroyAllWindows()
+
+        # Re-train the model with new data
+        self.load_dataset()
+        print(f"User '{username}' registered successfully!")
+
+    def register_user_stream(self, username):
+        """Stream real-time face registration progress."""
+        try:
+            user_path = os.path.join(self.dataset_dir, username)
+            if not os.path.isdir(user_path):
+                os.makedirs(user_path)
+
+            webcam = cv2.VideoCapture(0)
+            if not webcam.isOpened():
+                yield "data: Error - Could not access the webcam\n\n"
+                return
+
+            count = 0
+            while count < 20:
+                ret, frame = webcam.read()
+                if not ret:
+                    yield "data: Error - Failed to read from webcam\n\n"
+                    break
+
+                gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                faces = self.face_cascade.detectMultiScale(gray, 1.3, 5)
+
+                for (x, y, w, h) in faces:
+                    face = gray[y:y + h, x:x + w]
+                    face_resized = cv2.resize(face, (self.width, self.height))
+                    
+                    # Save the image
+                    img_path = os.path.join(user_path, f"{count}.jpg")
+                    cv2.imwrite(img_path, face_resized)
+                    count += 1
+
+                    # Draw a rectangle around the face
+                    cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
+
+                    # Add progress text on the frame
+                    label_text = f"Capturing {count}/20"
+                    cv2.putText(frame, label_text, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+
+                    # Display the frame (optional)
+                    cv2.imshow("Registering New User", frame)
+
+                    # Send progress update to client
+                    yield f"data: Captured {count}/20 images\n\n"
+
+                    if count >= 20:
+                        break
+
+                         
+                # Exit loop if 'q' is pressed
+                if cv2.waitKey(10) & 0xFF == ord('q'):
+                    yield "data: Registration canceled by user\n\n"
+                    break
+
+                time.sleep(0.1)
+
+            webcam.release()
+            cv2.destroyAllWindows()
+            yield "data: Registration complete\n\n"  
+
+        except Exception as e:
+            print(f"Error during registration: {e}")
+            yield f"data: Error - {str(e)}\n\n"
+        finally:
+            webcam.release()
+            cv2.destroyAllWindows()
+
+    def recognize_faces(self, frame):
+        """Detects and recognizes faces in a given frame."""
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        faces = self.face_cascade.detectMultiScale(gray, 1.3, 5)
+        
+        for (x, y, w, h) in faces:
+            face = gray[y:y + h, x:x + w]
+            face_resized = cv2.resize(face, (self.width, self.height))
+
+            # Predict the identity of the face
+            label, confidence = self.model.predict(face_resized)
+            
+            if confidence < 100:  # Adjust threshold as needed
+                label_text = f"{self.names[label]} - {confidence:.2f}"
+                color = (0, 255, 0)  # Green for recognized faces
+            else:
+                label_text = "Unknown"
+                color = (0, 0, 255)  # Red for unrecognized faces
+            
+            # Draw bounding box and label
+            cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
+            cv2.putText(frame, label_text, (x, y - 10), cv2.FONT_HERSHEY_PLAIN, 1, color, 2)
+
+        return frame
