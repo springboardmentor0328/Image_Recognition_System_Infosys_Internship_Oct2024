@@ -53,13 +53,12 @@ def load_images_and_labels_from_db():
     return images, np.array(labels, dtype=np.int32)
 
 # Function to train the recognizer with the loaded images and labels
-def train_model():
-    images, labels = load_images_and_labels_from_db()
-    if len(images) > 0 and labels.size > 0:
-        recognizer.train(images, labels)  # Train the model
-        print("Model training complete.")
-    else:
-        print("No data to train on. Check the database for stored images.")
+images, labels = load_images_and_labels_from_db()
+if len(images) > 0 and labels.size > 0:
+    recognizer.train(images, labels)  # Train the model
+    print("Model training complete.")
+else:
+    print("No data to train on. Check the database for stored images.") 
 
 # Real-time face recognition using webcam
 def recognize_faces():

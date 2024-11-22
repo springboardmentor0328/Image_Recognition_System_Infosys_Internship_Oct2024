@@ -56,7 +56,7 @@ def delete_user():
 def async_recognition():
     try:
         print("Training model...")  # For debugging
-        inference.train_model()  # Train the model before recognition
+        # inference.train_model()  # Train the model before recognition
         print("Recognition started")  # For debugging
         inference.recognize_faces()  # Run recognition from inference.py
     except Exception as e:
@@ -67,15 +67,13 @@ def async_recognition():
 @app.route('/start_recognition', methods=['GET'])
 def start_recognition():
     try:
-        # Send initial status to the frontend
-        print("Training started, please wait...")
         # Start recognition in a separate thread
         recognition_thread = threading.Thread(target=async_recognition)
         recognition_thread.start()
         print("Recognition thread started")  # For debugging
 
         # Return initial response
-        return jsonify({"status": "Training started, please wait..."}), 200
+        return jsonify({"status": "Recognition Started"}), 200
 
     except Exception as e:
         print(f"Recognition error: {e}")

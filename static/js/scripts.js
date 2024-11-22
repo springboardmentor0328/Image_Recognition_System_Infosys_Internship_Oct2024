@@ -10,11 +10,6 @@ document.getElementById('start_recognition').addEventListener('click', function(
     .then(data => {
         // Show the initial message
         document.getElementById('status').innerText = data.status;
-
-        // After 10 seconds, update the status to "Recognition Started"
-        setTimeout(() => {
-            document.getElementById('status').innerText = 'Recognition Started';
-        }, 40000);  // Update after 20 seconds
     })
     .catch(error => {
         document.getElementById('status').innerText = 'Recognition Error: ' + error;
