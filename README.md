@@ -6,11 +6,17 @@
    Opem terminal or command prompt
 
       pip install flask
+  
       pip install opencv-python
+  
       pip install opencv-contrib-python
+  
       pip install numpy
+  
       pip install pysqlite3
+  
       pip install flask-sqlalchemy
+  
       pip install opencv-contrib-python==4.5.5.64
       
 * Clone the repository:
