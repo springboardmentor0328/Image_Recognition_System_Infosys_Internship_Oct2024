@@ -1,3 +1,18 @@
+* Download python search this in browser
+
+      https://www.python.org/ftp/python/3.13.0/python-3.13.0-amd64.exe
+
+* Install some prerequisites
+   Opem terminal or command prompt
+
+      pip install flask
+      pip install opencv-python
+      pip install opencv-contrib-python
+      pip install numpy
+      pip install pysqlite3
+      pip install flask-sqlalchemy
+      pip install opencv-contrib-python==4.5.5.64
+      
 * Clone the repository:
   Open a terminal or command prompt.
   Use the git clone command followed by the URL of the GitHub repository to clone the code to your local machine:
