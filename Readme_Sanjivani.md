@@ -1,18 +1,25 @@
-<h1>Face Recognition using MobileFaceNet and MobileNetV2</h1>
+# Face Recognition System Using MobileNetV2
 
-<p>This project explores two approaches for face recognition using different models. The initial part involves training the MobileFaceNet model from scratch on the LFW (Labeled Faces in the Wild) dataset available in scikit-learn. However, this experiment yielded suboptimal results, and the model requires further tuning. In the second part, accessing the local machine camera through Google Colab is explored. It contains code snippets to access the camera, take and save snapshots, and stream video continuously in real time. It also includes code for capturing and saving faces in the custom dataset. In the last part, a pre-trained MobileNetV2 model is used for real-time face recognition on a custom dataset, which was created from captured video frames.</p>
+The face recognition project aims to develop a system capable of recognising individuals using a laptop's camera. This system leverages computer vision techniques to capture real-time images and process them for face identification.
 
-<p>Currently, the code provides a foundation for face recognition tasks and is still under development. The camera functionality includes face detection, and the recognition system is designed to perform on-the-fly predictions using MobileNetV2.</p>
+This project is a face recognition system developed using Flask, OpenCV, and MobileNetV2, designed to capture and recognize faces in real-time. It extracts facial embeddings from live video streams and matches them against stored data, providing a confidence score for each recognition attempt.
 
-<h2>Features</h2>
-<ul>
-    <li><strong>MobileFaceNet Training</strong>: Custom training of the MobileFaceNet model from scratch on the LFW dataset.</li>
-    <li><strong>Camera Access in Google Colab</strong>: Capturing snapshots and continuous video streams using Google Colab's camera access capabilities.</li>
-    <li><strong>Real-time Face Recognition</strong>: Using a pre-trained MobileNetV2 model for real-time face recognition on a custom dataset captured from the camera.</li>
-    <li><strong>Face Detection</strong>: Basic face detection functionality implemented during video stream capture.</li>
-</ul>
+# Components Used
+1. Flask: Web server for hosting the user interface and handling backend operations.
+2. OpenCV: Used for real-time video capture and face detection(Haar cascade).
+3. MobileNetV2: A pre-trained model for extracting facial embeddings.
+4. SQLite: Database for storing facial embeddings and associated user data.
 
-<h2>Future Work</h2>
-<p>The project is a work in progress. Improvements will be made to enhance the accuracy of the MobileFaceNet model and MobileNetV2. The goal is to improve the recognition process and the confidence level of predictions.</p>
+# Week-Wise Progress
+Week 1-2: Face detection using Haarcascade. Demonstrated real-time face detection with a webcam and static image detection.
 
-<p>The <strong>imgrec.ipynb</strong> file contains the code for all the mentioned functionalities.</p>
+Week 3-4: Integrated MobileNetV2 for extracting facial embeddings. Implemented real-time face recognition with transfer learning and embedding comparison using cosine similarity.
+
+Week 5-6: Enhanced face capturing system with multiple position-specific images, integrating OpenCV and JavaScript for real-time webcam input. Gradio was integrated for the face recognition UI, though it faced some challenges with face capturing.
+
+Week 7-8: Developed a Flask-based face recognition app, utilizing an SQLite database to store and retrieve facial embeddings for efficient recognition. The system is designed for real-time recognition using the pre-captured embeddings.
+
+Face Recognition System: Contains the main code
+
+# Conclusion
+This face recognition system provides a simple yet effective way to register and recognize faces using a webcam and deep learning models. It captures multiple images, processes them to extract facial features, and matches them against a database in real-time.
