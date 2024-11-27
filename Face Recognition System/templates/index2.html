@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Recognition</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-image: url("wall.jpg");
+        }
+        .head {
+            background-color: #0078d7;
+            padding: 15px;
+            margin-bottom: 10px;
+            width: 100%;
+            text-align: center;
+        }
+        .head h1 {
+            font-size: 200;
+            font-family: Lucida Handwriting;
+            color: #F1F0E8;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        #cameraContainer {
+            border: 2px solid #007bff;
+            border-radius: 10px;
+            background-color: white;
+            padding: 15px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 500px;
+            height: 430px;
+            max-width: 600px;
+        }
+
+        #videoFeed {
+            width: 100%;
+            max-width: 400px;
+            height: 400px; /* Adjust as needed */
+            background-color: #dcdcdc;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            color: white;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0px 3px 5px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+        a {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #0078d7;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        a:hover {
+            background-color: #005bb5;
+        }
+    </style>
+    <script>
+        let isRecognitionOn = false;
+
+        function toggleRecognition() {
+            const videoElement = document.getElementById('videoFeed');
+            const button = document.getElementById('toggleButton');
+            
+            if (!isRecognitionOn) {
+                // Start face recognition
+                videoElement.src = "{{ url_for('video_feed2') }}";
+                videoElement.style.display = "block"; // Make the video visible
+                button.textContent = "Stop Face Recognition";
+                isRecognitionOn = true;
+            } else {
+                // Stop face recognition
+                videoElement.src = ""; // Clear the video feed
+                videoElement.style.display = "none"; // Hide the video
+                button.textContent = "Start Face Recognition";
+                isRecognitionOn = false;
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="head">
+        <h1>Face Rec<h1>
+    </div><br>
+    <h1>Face Recognition</h1>
+    <div id="cameraContainer">
+        <img id="videoFeed" style="display: none;">
+    </div><br>
+    <button id="toggleButton" onclick="toggleRecognition()">Start Face Recognition</button><br>
+    <a href="/">Go Back</a>
+</body>
+</html>
