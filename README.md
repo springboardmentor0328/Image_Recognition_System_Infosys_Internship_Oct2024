@@ -49,7 +49,7 @@ If False, the app will run on CPU.
 <br/>
 **How to Run the App**<br/>
 <br/>
-* Start the app: FaceRecognitionApp.py <br/>
+* Start the app: streamlit run FaceRecognitionApp.py <br/>
 * Open the URL displayed in your terminal (e.g., http://localhost:8501) in your web browser.<br/>
 <br/>
 <br/>
