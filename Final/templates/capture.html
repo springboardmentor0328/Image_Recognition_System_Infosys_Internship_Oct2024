@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fast Continuous Capture with Timed Instructions</title>
+    <style>
+        #capture-container {
+            position: relative;
+            display: inline-block;
+        }
+        #video {
+            width: 100%;
+            height: auto;
+        }
+        #bounding-box {
+            position: absolute;
+            border: 5px solid red;
+            top: 25%;
+            left: 25%;
+            width: 50%;
+            height: 50%;
+        }
+        #instructions {
+            position: absolute;
+            color: rgb(255, 255, 255);
+            font-size: 1.2em;
+            font-weight: bold;
+            text-align: center;
+            width: 100%;
+            top: 5%;
+            left: 0;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            text-align: center;
+            padding: 50px;
+        }
+        h2 {
+            color: #333;
+        }
+        video {
+            margin-top: 20px;
+            border: 2px solid #4CAF50;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 500px;
+        }
+        button {
+            margin-top: 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h2>Fast Capture with Timed Instructions</h2>
+    <div id="capture-container">
+        <video id="video" autoplay></video>
+        <div id="bounding-box"></div>
+        <p id="instructions">Align your face in the frame.</p>
+    </div>
+    <button onclick="startFastCapture()">Start Capture</button>
+    <button onclick="stopCapture()">Stop Capture</button>
+
+    <script>
+        const video = document.getElementById("video");
+        const instructionsElement = document.getElementById("instructions");
+        const username = new URLSearchParams(window.location.search).get("username");
+
+        const instructions = [
+            "Look straight ahead.",
+            "Turn slightly left.",
+            "Turn slightly right.",
+            "Tilt your head up.",
+            "Tilt your head down."
+        ];
+        let instructionIndex = 0;
+        let captureInterval, instructionInterval;
+        let imagesCaptured = 0;
+        const maxImages = 300;
+        let imageCounter = 0;
+
+        navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
+            video.srcObject = stream;
+        });
+
+        function updateInstruction() {
+            instructionsElement.innerText = instructions[instructionIndex];
+            instructionIndex = (instructionIndex + 1) % instructions.length;
+        }
+
+        function captureImage() {
+            if (imagesCaptured >= maxImages) {
+                stopCapture();
+                return;
+            }
+
+            const canvas = document.createElement("canvas");
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext("2d").drawImage(video, 0, 0);
+            const imageData = canvas.toDataURL("image/jpeg");
+
+            const uniqueImageName = `image_${Date.now()}_${imageCounter}.jpg`;
+            fetch("/save_image", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    username: username,
+                    image_data: imageData,
+                    image_name: uniqueImageName  // Send the unique image name
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    imagesCaptured++;
+                    imageCounter++;
+                    console.log(`Image ${imagesCaptured} captured as ${uniqueImageName}`);
+                } else {
+                    console.error("Error: ", data.error);
+                }
+            })
+            .catch(err => console.error('Error saving image:', err));
+        }
+
+        function startFastCapture() {
+            imagesCaptured = 0;
+            instructionIndex = 0;
+            imageCounter = 0;
+            updateInstruction();
+            instructionInterval = setInterval(updateInstruction, 5000);
+            captureInterval = setInterval(captureImage, 100);
+        }
+
+        function stopCapture() {
+            clearInterval(captureInterval);
+            clearInterval(instructionInterval);
+            alert("Capture complete or manually stopped.");
+        }
+    </script>
+</body>
+</html>
