@@ -7,7 +7,7 @@ import gradio as gr
 known_face_encodings = []
 known_face_names = []
 
-# Function to capture and save a new face
+# Function to capture and save a new face 
 def register_new_face(name, num_images):
     face_classifier = cv2.CascadeClassifier("C:/Users/gayat/Downloads/haarcascade_frontalface_default.xml")
     cap = cv2.VideoCapture(0)
