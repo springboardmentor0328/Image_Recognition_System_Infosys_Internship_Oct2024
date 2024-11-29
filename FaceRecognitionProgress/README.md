@@ -12,7 +12,7 @@ This project is a Python-based face recognition system that uses the `face_recog
 - **Encoding Generation**:
   - Processes images from a dataset (organized in subfolders by person names).
   - Generates face encodings and saves them in a `.pkl` file for efficient recognition.
-
+---
 ### Python Libraries
 - `face_recognition`
 - `pickle`
