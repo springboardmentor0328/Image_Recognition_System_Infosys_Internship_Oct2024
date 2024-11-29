@@ -1,5 +1,5 @@
 # Image_Recognition_System_Infosys_Internship_Oct2024
-The image recognition project aims to develop a system capable of recognising individuals using a laptop's camera. This system leverages computer vision techniques to capture real-time images and process them for face identification.
+The image recognition project aims to develop a system capable of recognising individuals using a laptop's camera. This system leverages computer vision techniques to capture real-time images and process them for face identification.<br/>
 
 **This is a real-time face recognition app built with Python, Streamlit, and FaceNet. It enables users to register and recognize faces using webcam input.**
 
@@ -9,6 +9,11 @@ The image recognition project aims to develop a system capable of recognising in
 * **User Management**: Add user profiles.<br/>
 * **Glowing Button UI**: Aesthetic UI design with glowing buttons for better user experience.<br/>
 <br/>
+
+
+**Face Recogntion.ipynb** : This file contains the Python code for the Face Recognition Model<br/>
+**FaceRecognitionApp.py** : This file is the main application for Face Recognition . Run This File 
+using the instructions given below. <br/>
 
 **Requirements**<br/>
 Ensure you have the following installed on your system:<br/>
